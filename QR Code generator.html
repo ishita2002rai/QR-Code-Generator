@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Styled QR Code Generator</title>
+  <!-- QRCode.js library -->
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+  <!-- html2canvas library for screenshotting the styled QR code -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- Google Fonts: Faustina (for heading) and Mulish (for buttons) -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Faustina:wght@400;700&family=Mulish:wght@400;700&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #FFFFE0; /* Light yellow background */
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 320px;
+      margin: 20px auto 100px auto; /* Extra space for fixed footer */
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Faustina', serif;
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"], select {
+      width: 90%;
+      padding: 8px;
+      font-size: 0.9rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      font-family: 'Mulish', sans-serif;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      background: maroon;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #800000; /* Darker maroon on hover */
+    }
+
+    /* This container holds both the emoji and the QR code together */
+    #styledContainer {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Increase emoji size further */
+    #emoji {
+      font-size: 10rem;
+      line-height: 1;
+      text-align: center;
+      display: none; /* Hidden by default (for Basic) */
+    }
+
+    /* We'll place the actual QR code here */
+    #qrcodeContainer {
+      margin: 10px auto;
+      text-align: center;
+      position: static; /* Will be changed dynamically for certain styles */
+    }
+
+    /* Footer pinned to bottom */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #999;
+      font-size: 0.8rem;
+      background: #FFFFE0;
+      padding: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code Generator</h1>
+
+    <input type="text" id="url" placeholder="Enter a URL here" />
+    <br />
+
+    <select id="styleSelect">
+      <option value="basic">Basic</option>
+      <option value="mobilePhone">Mobile Phone</option>
+      <option value="clapboard">Clapboard</option>
+      <option value="insideTheScroll">Inside the Scroll</option>
+    </select>
+    <br/>
+
+    <button onclick="generateQR()">Generate QR</button>
+    <button id="downloadBtn" onclick="downloadQR()" style="display:none;">Download QR</button>
+
+    <p id="errorMessage" style="color: red; font-style: italic; display: none; font-size: 0.85rem;"></p>
+
+
+    <!-- This is the container we'll screenshot for the final styled QR code -->
+    <div id="styledContainer">
+      <div id="emoji"></div>
+      <div id="qrcodeContainer"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; 2025 QR Code Generator
+  </div>
+
+  <script>
+    let qrcode = null;
+
+    function generateQR() {
+      const urlInput = document.getElementById('url').value.trim();
+      const errorMessage = document.getElementById('errorMessage');
+      if (!urlInput) {
+          errorMessage.textContent = "Please enter a valid URL.";
+          errorMessage.style.display = "block";
+          return;
+      } else {
+          errorMessage.style.display = "none";
+      }
+
+
+      const styleSelect = document.getElementById('styleSelect').value;
+      const emojiEl = document.getElementById('emoji');
+      const qrcodeContainer = document.getElementById('qrcodeContainer');
+
+      // Clear any existing QR code
+      if (qrcode) {
+        qrcodeContainer.innerHTML = "";
+        qrcode = null;
+      }
+
+      // Reset to default styling
+      emojiEl.style.display = "none";
+      qrcodeContainer.style.position = "static";
+      qrcodeContainer.style.top = "";
+      qrcodeContainer.style.left = "";
+      qrcodeContainer.style.transform = "";
+      
+      // Default QR size
+      let qrSize = 200;
+
+      // Adjust styling and emoji based on selection
+      switch (styleSelect) {
+        case "basic":
+          // No emoji, default size
+          break;
+        case "mobilePhone":
+          // Show the phone emoji
+          emojiEl.textContent = "📱";
+          emojiEl.style.display = "block";
+          // Move QR a little more down and slightly right
+          qrcodeContainer.style.position = "absolute";
+          qrcodeContainer.style.top = "43%";
+          qrcodeContainer.style.left = "49%";
+          qrcodeContainer.style.transform = "translate(-50%, -50%)";
+          // Keep smaller QR size for phone style
+          qrSize = 100;
+          break;
+        case "clapboard":
+          // Show the clapboard emoji
+          emojiEl.textContent = "🎬";
+          emojiEl.style.display = "block";
+          // Reduce the size of the QR and move it a little to the right
+          qrcodeContainer.style.position = "absolute";
+          qrcodeContainer.style.top = "69%";
+          qrcodeContainer.style.left = "55%";
+          qrcodeContainer.style.transform = "translate(-50%, -50%)";
+          qrSize = 68;
+          break;
+        case "insideTheScroll":
+          // Show the scroll emoji
+          emojiEl.textContent = "📜";
+          emojiEl.style.display = "block";
+          qrcodeContainer.style.position = "absolute";
+          qrcodeContainer.style.top = "42%";
+          qrcodeContainer.style.left = "52.5%";
+          qrcodeContainer.style.transform = "translate(-50%, -50%)";
+          qrSize = 95;
+          break;
+      }
+
+      // Create a new QR code in the #qrcodeContainer
+      qrcode = new QRCode(qrcodeContainer, {
+        text: urlInput,
+        width: qrSize,
+        height: qrSize,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // Show the download button once a QR code is generated
+      document.getElementById("downloadBtn").style.display = "inline-block";
+    }
+
+    function downloadQR() {
+      // Use html2canvas to screenshot #styledContainer
+      const container = document.getElementById("styledContainer");
+      if (!container.querySelector("canvas")) {
+        alert("Please generate a QR code first.");
+        return;
+      }
+
+      html2canvas(container).then(canvas => {
+        const imageData = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = 'styled-qrcode.png';
+        link.href = imageData;
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
